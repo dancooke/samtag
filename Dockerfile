@@ -32,10 +32,13 @@ RUN set -ex; \
     make install
 
 # Install samtag
+ARG architecture=broadwell
 COPY . /opt/samtag
 WORKDIR /opt/samtag/build
 RUN set -ex; \
-    cmake ..; \
+    cmake \
+        -DCOMPILER_ARCHITECTURE=${architecture} \
+        ..; \
     make install
 
 ENV PATH="/opt/samtag:${PATH}"
