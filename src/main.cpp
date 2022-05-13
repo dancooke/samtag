@@ -48,12 +48,22 @@ struct HtsBam1Deleter
 
 using ReadNameMap = std::unordered_map<std::string, std::string>;
 
+auto estimate_line_count(const fs::path& filename)
+{
+    const auto bytes = fs::file_size(filename);
+    std::ifstream file {filename};
+    std::string line {};
+    std::getline(file, line);
+    return bytes / (line.length() + 1);
+}
+
 auto load_reads(const fs::path& qnames_tsv_path, const bool verbose = false)
 {
     const std::size_t log_tick {10'000'000};
+    const auto estimated_lines = estimate_line_count(qnames_tsv_path);
     std::ifstream qname_tsv {qnames_tsv_path};
     std::vector<std::pair<std::string, std::string>> reads {};
-    reads.reserve(1'000'000);
+    reads.reserve(estimated_lines);
     std::string line {};
     for (std::size_t i {0}; std::getline(qname_tsv, line); ++i) {
         if (verbose && i > 0 and i % log_tick == 0) {
