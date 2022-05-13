@@ -307,9 +307,25 @@ auto parse_args(const int argc, char** argv)
     return result;
 }
 
+void check_input(const ProgramOptions& options)
+{
+    if (options.src_bam_path != "-" && !fs::exists(options.src_bam_path)) {
+        std::cerr << "ERROR: input file " << options.src_bam_path << " does not exist." << std::endl;
+        exit(1);
+    }
+    if (!fs::exists(options.qname_tsv_path)) {
+        std::cerr << "ERROR: input file " << options.qname_tsv_path << " does not exist." << std::endl;
+        exit(1);
+    }
+    if (options.build_index && !options.output) {
+        std::clog << "Warn: cannot build bam index without --output!" << std::endl;
+    }
+}
+
 int main(int argc, char** argv)
 {
     const auto options = parse_args(argc, argv);
+    check_input(options);
     auto read_names = load_reads(options.qname_tsv_path, options.verbose);
     if (options.verbose > 0) std::clog << "Loaded " << read_names.size() << " read names" << std::endl;
     tag_reads(options.src_bam_path, read_names, options.output, options.tag, options.flag, options.verbose);
