@@ -1,35 +1,16 @@
-FROM alpine:3.15
+FROM ubuntu:jammy
 
-RUN set -ex; \
-    apk add --no-cache \
-        autoconf \
-        make \
-        automake \
-        zlib-dev bzip2-dev xz-dev libcurl openssl-dev \
-        libtool \
-        gcc g++ \
+ARG DEBIAN_FRONTEND=noninteractive
+ENV TZ=Europe/London
+
+# Get dependencies
+RUN RUN set -ex; \
+    apt-get -y update; \
+    apt-get -y install \
+        build-essential \
         cmake \
-        wget; \
+        libhts-dev; \
     rm -rf /var/lib/apt/lists/*
-
-# Install htslib
-ARG HTSLIB_VERSION='1.15.1'
-ARG HTSCODECS_VERSION='1.2.2'
-WORKDIR /opt
-# hadolint ignore=DL3003,DL4006
-RUN set -ex; \
-    wget -qO- https://github.com/samtools/htslib/archive/refs/tags/${HTSLIB_VERSION}.tar.gz | tar xzf - -C $(pwd); \
-    cd htslib-${HTSLIB_VERSION}; \
-    wget -qO- https://github.com/samtools/htscodecs/archive/refs/tags/v${HTSCODECS_VERSION}.tar.gz | tar xzf - -C $(pwd); \
-    rm -r htscodecs && mv htscodecs-${HTSCODECS_VERSION} htscodecs; \
-    cd htscodecs; \
-    autoreconf -i; \
-    ./configure; \
-    make; \
-    cd ..; \
-    autoreconf -i; \
-    ./configure; \
-    make install
 
 # Install samtag
 ARG architecture=broadwell
