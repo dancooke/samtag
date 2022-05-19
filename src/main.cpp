@@ -554,12 +554,15 @@ void add_read(const bam1_t& read, TagStats& stats)
             } else {
                 ++count;
                 if (stats.value_counts) {
-                    const auto value = bam_aux2Z(p);
-                    if (value) {
-                        auto valued_tag = tag;
-                        valued_tag.value = value;
-                        ++((*stats.value_counts)[std::move(valued_tag)]);
+                    std::string value {};
+                    switch (*p) {
+                    case 'Z': value = bam_aux2Z(p); break;
+                    case 'i': value = std::to_string(bam_aux2i(p)); break;
+                    case 'f': value = std::to_string(bam_aux2f(p)); break;
                     }
+                    auto valued_tag = tag;
+                    valued_tag.value = std::move(value);
+                    ++((*stats.value_counts)[std::move(valued_tag)]);
                 }
             }
         }
