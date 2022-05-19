@@ -24,6 +24,8 @@
 #include <htslib/hts.h>
 #include <htslib/sam.h>
 
+#include "robin_hood.h"
+
 #include "version.hpp"
 
 namespace fs = std::filesystem;
@@ -78,7 +80,7 @@ struct HtsBam1Deleter
 // tag
 //
 
-using ReadNameMap = std::unordered_map<std::string, std::string>;
+using ReadNameMap = robin_hood::unordered_map<std::string, std::string>;
 
 auto estimate_line_count(const fs::path& filename)
 {
@@ -529,7 +531,7 @@ struct SearchTagHash
     }
 };
 
-using TagCountMap = std::unordered_map<SearchTag, std::size_t, SearchTagHash>;
+using TagCountMap = robin_hood::unordered_map<SearchTag, std::size_t, SearchTagHash>;
 
 struct TagStats
 {
@@ -611,11 +613,13 @@ void write(const TagStats& stats, std::ostream& os, const bool sorted = false, c
         os << std::endl;
     };
     if (sorted) {
-        std::vector<std::pair<SearchTag, std::size_t>> counts {
-            std::begin(stats.counts), std::end(stats.counts)
+        std::vector<std::pair<SearchTag, std::size_t>> counts(stats.counts.size() + (stats.value_counts ? stats.value_counts->size() : std::size_t {}));
+        const static auto robin_pair_to_pair = [] (auto&& p) {
+            return std::make_pair(p.first, p.second);
         };
+        auto itr = std::transform(std::begin(stats.counts), std::end(stats.counts), std::begin(counts), robin_pair_to_pair);
         if (stats.value_counts) {
-            counts.insert(std::end(counts), std::begin(*stats.value_counts), std::end(*stats.value_counts));
+            std::transform(std::begin(*stats.value_counts), std::end(*stats.value_counts), itr, robin_pair_to_pair);
         }
         const static auto count_greater = [] (const auto& lhs, const auto& rhs) noexcept {
             return lhs.second > rhs.second;
