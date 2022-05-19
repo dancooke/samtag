@@ -101,8 +101,11 @@ auto load_reads(const fs::path& qnames_tsv_path, const bool verbose = false)
         if (verbose && i > 0 and i % log_tick == 0) {
             std::clog << "Loaded " << i << " reads" << std::endl;
         }
-        const auto name_end_pos = line.find('\t');
-        reads.emplace_back(line.substr(0, name_end_pos), name_end_pos != std::string::npos ? line.substr(name_end_pos + 1) : "");
+        if (!line.empty()) {
+            if (line.back() == '\r') line.pop_back();
+            const auto name_end_pos = line.find('\t');
+            reads.emplace_back(line.substr(0, name_end_pos), name_end_pos != std::string::npos ? line.substr(name_end_pos + 1) : "");
+        }
     }
     return ReadNameMap {
         std::make_move_iterator(std::begin(reads)),
