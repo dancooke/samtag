@@ -557,15 +557,26 @@ void add_read(const bam1_t& read, TagStats& stats)
             } else {
                 ++count;
                 if (stats.value_counts) {
-                    std::string value {};
-                    switch (*p) {
-                    case 'Z': value = bam_aux2Z(p); break;
-                    case 'i': value = std::to_string(bam_aux2i(p)); break;
+                    std::optional<std::string> value {};
+                    const auto type = static_cast<char>(*p);
+                    switch (type) {
+                    case 'c': [[fallthrough]];
+                    case 'C': [[fallthrough]];
+                    case 's': [[fallthrough]];
+                    case 'S': [[fallthrough]];
+                    case 'i': [[fallthrough]];
+                    case 'I': value = std::to_string(bam_aux2i(p)); break;
                     case 'f': value = std::to_string(bam_aux2f(p)); break;
+                    case 'Z': value = bam_aux2Z(p); break;
                     }
-                    auto valued_tag = tag;
-                    valued_tag.value = std::move(value);
-                    ++((*stats.value_counts)[std::move(valued_tag)]);
+                    if (value) {
+                        if (value->starts_with("SEQ")) {
+                            std::cout << "here" << std::endl;
+                        }
+                        auto valued_tag = tag;
+                        valued_tag.value = std::move(*value);
+                        ++((*stats.value_counts)[std::move(valued_tag)]);
+                    }
                 }
             }
         }
