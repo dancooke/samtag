@@ -570,9 +570,6 @@ void add_read(const bam1_t& read, TagStats& stats)
                     case 'Z': value = bam_aux2Z(p); break;
                     }
                     if (value) {
-                        if (value->starts_with("SEQ")) {
-                            std::cout << "here" << std::endl;
-                        }
                         auto valued_tag = tag;
                         valued_tag.value = std::move(*value);
                         ++((*stats.value_counts)[std::move(valued_tag)]);
